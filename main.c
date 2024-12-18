@@ -27,81 +27,98 @@ char intensityToASCII(int intensity, const char* asciiChars) {
  * @return 0 if the program runs successfully, -1 if an error occurs.
  */
 int main(int argc, char** argv) {
-    int widthScale = DEFAULT_WIDTH_SCALE;    // Default
-    int heightScale = DEFAULT_HEIGHT_SCALE;  // Default
-    char asciiChars[100];                    // Array to store user-defined ASCII characters (100 MAX)
-    char outputPath[300];                    // Array to store user-defined output path
-    strcpy(asciiChars, DEFAULT_ASCII_CHARS); // Initialize with default value
 
-    if (argc != 2) {
+    int widthScale = DEFAULT_WIDTH_SCALE;     // Default
+    int heightScale = DEFAULT_HEIGHT_SCALE;   // Default
+    char asciiChars[100];                     // Array to store user-defined ASCII characters (100 MAX)
+    char outputPath[300];                     // Array to store user-defined output path
+    strcpy(asciiChars, DEFAULT_ASCII_CHARS);  // Initialize with default value
+    strcpy(outputPath, DEFAULT_OUTPUT_PATH);  // Initialize with default value
+
+    // If no path || invalid
+    if (argc < 2) {
         printf("Uso: %s <caminho_para_imagem>\n", argv[0]);
         return -1;
     }
 
-    // Ask the user for the output file path
-    printf("Digite o caminho e nome do arquivo de saída (padrão: \"%s\"): ", DEFAULT_OUTPUT_PATH);
-    char userPath[200];
-    if (fgets(userPath, sizeof(userPath), stdin) != NULL) {
-        if (userPath[0] == '\n') {
-            strcpy(userPath, DEFAULT_OUTPUT_PATH); // Use default if input is empty
-        } else {
-            userPath[strcspn(userPath, "\n")] = 0;  // Remove the newline at the end
+    // Check if the user provided the --default flag
+    bool useDefaults = false;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--default") == 0) {
+            useDefaults = true;
+            break;
         }
     }
 
-    // If user only provided a path but no filename, use "output.txt" as filename
-    if (userPath[strlen(userPath) - 1] == '/' || userPath[strlen(userPath) - 1] == '\\') {
-        // Check if the length of the path + "output.txt" fits into the buffer
-        if (strlen(userPath) + strlen("output.txt") < sizeof(outputPath)) {
-            snprintf(outputPath, sizeof(outputPath), "%soutput.txt", userPath);  // Add "output.txt" to the given path
-        } else {
-            printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
-            return -1; // If the path is too long
-        }
+    if (useDefaults) {
+        // Use default values, no need to prompt the user
+        printf("Usando valores padrão...\n");
     } else {
-        // If the user specified a file name but no extension, add ".txt"
-        if (strstr(userPath, ".txt") == NULL) {
-            // Check if the user path fits within the buffer when adding ".txt"
-            if (strlen(userPath) + strlen(".txt") < sizeof(outputPath)) {
-                snprintf(outputPath, sizeof(outputPath), "%s.txt", userPath);  // Add ".txt" extension
+        // Ask the user for the output file path
+        printf("Digite o caminho e nome do arquivo de saída (padrão: \"%s\"): ", DEFAULT_OUTPUT_PATH);
+        char userPath[200];
+        if (fgets(userPath, sizeof(userPath), stdin) != NULL) {
+            if (userPath[0] == '\n') {
+                strcpy(userPath, DEFAULT_OUTPUT_PATH); // Use default if input is empty
+            } else {
+                userPath[strcspn(userPath, "\n")] = 0;  // Remove the newline at the end
+            }
+        }
+
+        // If user only provided a path but no filename, use "output.txt" as filename
+        if (userPath[strlen(userPath) - 1] == '/' || userPath[strlen(userPath) - 1] == '\\') {
+            // Check if the length of the path + "output.txt" fits into the buffer
+            if (strlen(userPath) + strlen("output.txt") < sizeof(outputPath)) {
+                snprintf(outputPath, sizeof(outputPath), "%soutput.txt", userPath);  // Add "output.txt" to the given path
             } else {
                 printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
                 return -1; // If the path is too long
             }
         } else {
-            strncpy(outputPath, userPath, sizeof(outputPath) - 1);
-            outputPath[sizeof(outputPath) - 1] = '\0';  // Ensure null termination
-        }
-    }
-
-    // Ask the user for the width scale
-    printf("Digite o fator de escala para a largura (padrão: %d): ", DEFAULT_WIDTH_SCALE);
-    char input[10];
-    if (fgets(input, sizeof(input), stdin) != NULL) {
-        if (input[0] != '\n') {  // If the user didn't just press Enter
-            if (sscanf(input, "%d", &widthScale) != 1) {
-                widthScale = DEFAULT_WIDTH_SCALE; // Use default if invalid input
+            // If the user specified a file name but no extension, add ".txt"
+            if (strstr(userPath, ".txt") == NULL) {
+                // Check if the user path fits within the buffer when adding ".txt"
+                if (strlen(userPath) + strlen(".txt") < sizeof(outputPath)) {
+                    snprintf(outputPath, sizeof(outputPath), "%s.txt", userPath);  // Add ".txt" extension
+                } else {
+                    printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
+                    return -1; // If the path is too long
+                }
+            } else {
+                strncpy(outputPath, userPath, sizeof(outputPath) - 1);
+                outputPath[sizeof(outputPath) - 1] = '\0';  // Ensure null termination
             }
         }
-    }
 
-    // Ask the user for the height scale
-    printf("Digite o fator de escala para a altura (padrão: %d): ", DEFAULT_HEIGHT_SCALE);
-    if (fgets(input, sizeof(input), stdin) != NULL) {
-        if (input[0] != '\n') {  // If the user didn't just press Enter
-            if (sscanf(input, "%d", &heightScale) != 1) {
-                heightScale = DEFAULT_HEIGHT_SCALE; // Use default if invalid input
+        // Ask the user for the width scale
+        printf("Digite o fator de escala para a largura (padrão: %d): ", DEFAULT_WIDTH_SCALE);
+        char input[10];
+        if (fgets(input, sizeof(input), stdin) != NULL) {
+            if (input[0] != '\n') {  // If the user didn't just press Enter
+                if (sscanf(input, "%d", &widthScale) != 1) {
+                    widthScale = DEFAULT_WIDTH_SCALE; // Use default if invalid input
+                }
             }
         }
-    }
 
-    // Ask the user for ASCII characters
-    printf("Digite os caracteres ASCII para usar (padrão: \"%s\"): ", DEFAULT_ASCII_CHARS);
-    if (fgets(asciiChars, sizeof(asciiChars), stdin) != NULL) {
-        if (asciiChars[0] == '\n') {
-            strcpy(asciiChars, DEFAULT_ASCII_CHARS); // Use default if input is empty
-        } else {
-            asciiChars[strcspn(asciiChars, "\n")] = 0;  // Remove the newline at the end
+        // Ask the user for the height scale
+        printf("Digite o fator de escala para a altura (padrão: %d): ", DEFAULT_HEIGHT_SCALE);
+        if (fgets(input, sizeof(input), stdin) != NULL) {
+            if (input[0] != '\n') {  // If the user didn't just press Enter
+                if (sscanf(input, "%d", &heightScale) != 1) {
+                    heightScale = DEFAULT_HEIGHT_SCALE; // Use default if invalid input
+                }
+            }
+        }
+
+        // Ask the user for ASCII characters
+        printf("Digite os caracteres ASCII para usar (padrão: \"%s\"): ", DEFAULT_ASCII_CHARS);
+        if (fgets(asciiChars, sizeof(asciiChars), stdin) != NULL) {
+            if (asciiChars[0] == '\n') {
+                strcpy(asciiChars, DEFAULT_ASCII_CHARS); // Use default if input is empty
+            } else {
+                asciiChars[strcspn(asciiChars, "\n")] = 0;  // Remove the newline at the end
+            }
         }
     }
 
