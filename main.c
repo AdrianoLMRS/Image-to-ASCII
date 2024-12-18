@@ -41,6 +41,24 @@ int endsWithAllowedFormat(const char* path) {
     return 0;  // If not allowed return 0
 }
 
+// Display help if --help flag
+void helpFlag(const char* programName) {
+    printf("Manual de Uso - Conversor de Imagens para ASCII\n");
+    printf("\nUso: %s <caminho_para_imagem> [opções]\n", programName);
+    printf("\nOpções:\n");
+    printf("  --help             Exibe este manual de uso.\n");
+    printf("  --default          Usa os valores padrão sem solicitar entrada do usuário.\n");
+    printf("\nEntradas do Usuário:\n");
+    printf("  - Preferência de cor: Digite 1 para usar cor, ou outro número para preto e branco.\n");
+    printf("  - Caminho para a imagem: O arquivo de entrada deve ser uma imagem válida.\n");
+    printf("  - Escala de largura e altura: Fatores de escala para ajustar a proporção.\n");
+    printf("  - Caracteres ASCII: Conjunto de caracteres para representar a imagem.\n");
+    printf("\nExemplo de Uso:\n");
+    printf("  %s imagem.png\n", programName);
+    printf("  %s imagem.png --default\n", programName);
+    printf("  %s imagem.png --help\n", programName);
+}
+
 /**
  * @brief Main function for the image to ASCII conversion program.
  *
@@ -53,6 +71,12 @@ int endsWithAllowedFormat(const char* path) {
  */
 int main(int argc, char** argv) {
 
+    // Display help manual if --help is passed
+    if (argc == 2 && strcmp(argv[1], "--help") == 0) {
+        helpFlag(argv[0]); // Display help manual in terminal
+        return 0; // Exit after displaying help
+    }
+
     int widthScale = DEFAULT_WIDTH_SCALE;     // Default
     int heightScale = DEFAULT_HEIGHT_SCALE;   // Default
     int colorChoice = 0;                      // Default
@@ -64,7 +88,8 @@ int main(int argc, char** argv) {
 
     // If no path || invalid
     if (argc < 2) {
-        printf("Uso: %s <caminho_para_imagem>\n", argv[0]);
+        printf("Uso: %s <caminho_para_imagem> [opções]\n", argv[0]);
+        printf("\n\nDigite --help para mais informações.");
         return -1;
     }
 
@@ -248,9 +273,6 @@ int main(int argc, char** argv) {
             printf("\n");         // Terminal breakline at the end of each row
         }
     }
-
-
-
 
     fclose(file); // Closes file
     printf("Conversão concluída! Resultado salvo em '%s'\n", outputPath); // Success log
