@@ -24,6 +24,23 @@ char* rgbToAnsiColor(cv::Vec3b pixel) {
     return colorCode;  // Return the ANSI escape code for the color
 }
 
+// Function to see if format is correct for colored image
+int endsWithAllowedFormat(const char* path) {
+    // Allowed extensions
+    const char* allowedFormats[] = {".png", ".jpeg", ".webp"};
+    int numFormats = 3;  // Número de formatos permitidos
+
+    for (int i = 0; i < numFormats; i++) {
+        int len = strlen(allowedFormats[i]);
+        int pathLen = strlen(path);
+        if (pathLen >= len && strcmp(path + pathLen - len, allowedFormats[i]) == 0) {
+            return 1;  // If is allowed return 1
+        }
+    }
+
+    return 0;  // If not allowed return 0
+}
+
 /**
  * @brief Main function for the image to ASCII conversion program.
  *
@@ -40,6 +57,7 @@ int main(int argc, char** argv) {
     int heightScale = DEFAULT_HEIGHT_SCALE;   // Default
     int colorChoice = 0;                      // Default
     char asciiChars[100];                     // Array to store user-defined ASCII characters (100 MAX)
+    char userPath[200];                       // Array to store user input output path
     char outputPath[300];                     // Array to store user-defined output path
     strcpy(asciiChars, DEFAULT_ASCII_CHARS);  // Initialize with default value
     strcpy(outputPath, DEFAULT_OUTPUT_PATH);  // Initialize with default value
@@ -58,7 +76,8 @@ int main(int argc, char** argv) {
             break;
         }
     }
-
+    
+    char input[10];  // Array to hold user input
     if (useDefaults) {
         // Use default values, no need to prompt the user
         printf("Usando valores padrão...\n");
@@ -66,48 +85,65 @@ int main(int argc, char** argv) {
         // IF THE --DEFAULT FLAG IS NOT USED - User inputs
         // Ask the user for the color preference
         printf("Digite 1 para transformar com cor ou algo diferente continuar sem cor: ");
-        // Try reading the integer input
-        if (scanf("%d", &colorChoice) != 1) {
-            // If scanf doesn't return 1 (meaning it's not a valid integer)
-            colorChoice = 0;  // Set to 0 if input is invalid
-            // Clear the input buffer to prevent further issues
-            while(getchar() != '\n');
-        }
-
-        // Ask the user for the output file path
-        printf("Digite o caminho e nome do arquivo de saída (padrão: \"%s\"): ", DEFAULT_OUTPUT_PATH);
-        char userPath[200];
-        if (fgets(userPath, sizeof(userPath), stdin) != NULL) {
-            if (userPath[0] == '\n') {
-                strcpy(userPath, DEFAULT_OUTPUT_PATH); // Use default if input is empty
+        if (fgets(input, sizeof(input), stdin) != NULL) {
+            // If input is empty (i.e., just Enter)
+            if (input[0] == '\n') {
+                colorChoice = 0;  // Default to 0 if input is empty
             } else {
-                userPath[strcspn(userPath, "\n")] = 0;  // Remove the newline at the end
+                // Try to convert the input to an integer
+                if (sscanf(input, "%d", &colorChoice) != 1) {
+                    colorChoice = 0;  // Set to 0 if conversion fails
+                }
             }
         }
-
-        // If user only provided a path but no filename, use "output.txt" as filename
-        if (userPath[strlen(userPath) - 1] == '/' || userPath[strlen(userPath) - 1] == '\\') {
-            // Check if the length of the path + "output.txt" fits into the buffer
-            if (strlen(userPath) + strlen("output.txt") < sizeof(outputPath)) {
-                snprintf(outputPath, sizeof(outputPath), "%soutput.txt", userPath);  // Add "output.txt" to the given path
-            } else {
-                printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
-                return -1; // If the path is too long
+        if (colorChoice != 1) {
+            // Ask the user for the output file path
+            printf("Digite o caminho e nome do arquivo de saída (padrão: \"%s\"): ", DEFAULT_OUTPUT_PATH);
+            if (fgets(userPath, sizeof(userPath), stdin) != NULL) {
+                if (userPath[0] == '\n') {
+                    strcpy(userPath, DEFAULT_OUTPUT_PATH); // Use default if input is empty
+                } else {
+                    userPath[strcspn(userPath, "\n")] = 0;  // Remove the newline at the end
+                }
             }
-        } else {
-            // If the user specified a file name but no extension, add ".txt"
-            if (strstr(userPath, ".txt") == NULL) {
-                // Check if the user path fits within the buffer when adding ".txt"
-                if (strlen(userPath) + strlen(".txt") < sizeof(outputPath)) {
-                    snprintf(outputPath, sizeof(outputPath), "%s.txt", userPath);  // Add ".txt" extension
+            // If user only provided a path but no filename, use "output.txt" as filename
+            if (userPath[strlen(userPath) - 1] == '/' || userPath[strlen(userPath) - 1] == '\\') {
+                // Check if the length of the path + "output.txt" fits into the buffer
+                if (strlen(userPath) + strlen("output.txt") < sizeof(outputPath)) {
+                    snprintf(outputPath, sizeof(outputPath), "%soutput.txt", userPath);  // Add "output.txt" to the given path
                 } else {
                     printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
                     return -1; // If the path is too long
                 }
             } else {
-                strncpy(outputPath, userPath, sizeof(outputPath) - 1);
-                outputPath[sizeof(outputPath) - 1] = '\0';  // Ensure null termination
+                // If the user specified a file name but no extension, add ".txt"
+                if (strstr(userPath, ".txt") == NULL) {
+                    // Check if the user path fits within the buffer when adding ".txt"
+                    if (strlen(userPath) + strlen(".txt") < sizeof(outputPath)) {
+                        snprintf(outputPath, sizeof(outputPath), "%s.txt", userPath);  // Add ".txt" extension
+                    } else {
+                        printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
+                        return -1; // If the path is too long
+                    }
+                } else {
+                    strncpy(outputPath, userPath, sizeof(outputPath) - 1);
+                    outputPath[sizeof(outputPath) - 1] = '\0';  // Ensure null termination
+                }
             }
+        } else {
+            // Solicita o caminho do arquivo
+            printf("Digite o caminho do arquivo (com a extensão): ");
+            scanf("%s", userPath);
+
+            // Verifica se o colorChoice é 1 e se o userPath não termina com um formato permitido
+            if (colorChoice == 1 && !endsWithAllowedFormat(userPath)) {
+                // Se não terminar com .png, .jpeg ou .webp, coloca .png
+                strcat(userPath, ".png");
+                printf("O arquivo será salvo como: %s\n", userPath);
+            } else {
+                printf("O arquivo será salvo como: %s\n", userPath);
+            }
+            strcpy(outputPath, userPath);
         }
 
         // Ask the user for the width scale
@@ -143,7 +179,7 @@ int main(int argc, char** argv) {
     }
 
     // Loads image in gray scale format
-    cv::Mat image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+    cv::Mat image = cv::imread(argv[1], cv::IMREAD_COLOR);
     if (image.empty()) {
         printf("Erro ao carregar a imagem.\n");
         return -1;
@@ -156,7 +192,7 @@ int main(int argc, char** argv) {
     // Resize image for better result
     cv::resize(image, image, cv::Size(cols, rows), 0, 0, cv::INTER_LINEAR);
 
-    // Create a .txt dile as output
+    // Create a .txt file as output
     FILE* file = fopen(outputPath, "w");
     if (file == NULL) {
         printf("Erro ao criar o arquivo de saída.\n");
@@ -167,37 +203,52 @@ int main(int argc, char** argv) {
     // Two for loops for rows & columns
     // The if statement is for color conversion
     if (colorChoice == 1) {
-        for (int i = 0; i < image.rows; i++) {
-            for (int j = 0; j < image.cols; j++) {
-                // Get the color pixel (BGR format)
-                cv::Vec3b pixel = image.at<cv::Vec3b>(i, j);
-                // Convert RGB to ANSI escape code
-                char* colorCode = rgbToAnsiColor(pixel);
-                int intensity = image.at<uchar>(i, j);  // Takes each value of pixels (0-255)
-                char asciiChar = intensityToASCII(intensity, asciiChars); // Convert intensity to ASCII
+        cv::Mat output(rows * heightScale, cols * widthScale, CV_8UC3, cv::Scalar(0, 0, 0)); // Canvas
 
-                // Print color ASCII in terminal
-                printf("%s%c\033[0m", colorCode, asciiChar);  // Reset color after each character
-                fprintf(file, "%s%c\033[0m", colorCode, asciiChar);
-            }
-            // Adds breakline at the end of each row
-            fprintf(file, "\n");
-            printf("\n");
-        }
-    } else {
         for (int i = 0; i < image.rows; i++) {
             for (int j = 0; j < image.cols; j++) {
-                // Maps intensity of each pixel, convert to ASCII and writes on the output file
-                int intensity = image.at<uchar>(i, j);  // Takes each value of pixels (0-255)
-                char asciiChar = intensityToASCII(intensity, asciiChars); // Convert intensity to ASCII
-                fprintf(file, "%c", asciiChar); // Writes pixels in the output file
-                printf("%c", asciiChar); // Writes pixels in the terminal
+                cv::Vec3b pixel = image.at<cv::Vec3b>(i, j); // RGB pixel
+                char asciiChar = intensityToASCII(image.at<uchar>(i, j), asciiChars); // Grayscale intensity
+
+                // Draw ASCII character on the image
+                cv::putText(
+                    output,
+                    std::string(1, asciiChar),  // Single ASCII character as string
+                    cv::Point(j * widthScale, i * heightScale),  // Position
+                    cv::FONT_HERSHEY_SIMPLEX,  // Font type
+                    0.5,                       // Font scale
+                    cv::Scalar(pixel[0], pixel[1], pixel[2]),  // Color (BGR)
+                    1                          // Thickness
+                );
             }
-            // Adds breakline in the final of each row
-            fprintf(file, "\n");
-            printf("\n");
+        }
+
+        // Save the rendered image
+        cv::imwrite(outputPath, output);
+        printf("Imagem gerada e salva como: %s\n", outputPath);
+
+    } else {
+        // Convert to grayscale
+        cv::Mat grayImage;
+        if (image.channels() > 1) {
+            cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
+        } else {
+            grayImage = image;
+        }
+
+        // Process each pixel
+        for (int i = 0; i < grayImage.rows; i++) {
+            for (int j = 0; j < grayImage.cols; j++) {
+                int intensity = grayImage.at<uchar>(i, j);  // Intensity (0 - 255)
+                char asciiChar = intensityToASCII(intensity, asciiChars);  // Convert to ASCII
+                fprintf(file, "%c", asciiChar); // Write in file
+                printf("%c", asciiChar);       // Show in terminal
+            }
+            fprintf(file, "\n");  // File breakline at the end of each row
+            printf("\n");         // Terminal breakline at the end of each row
         }
     }
+
 
 
 
