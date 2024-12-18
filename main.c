@@ -16,6 +16,14 @@ char intensityToASCII(int intensity, const char* asciiChars) {
     return asciiChars[(intensity * (len - 1)) / 255];
 }
 
+// Function to convert RGB values to an ANSI escape code for text foreground color
+char* rgbToAnsiColor(cv::Vec3b pixel) {
+    static char colorCode[20];
+    // Convert RGB to an ANSI escape code for foreground color (e.g., 38;2;R;G;B)
+    snprintf(colorCode, sizeof(colorCode), "\033[38;2;%d;%d;%dm", pixel[2], pixel[1], pixel[0]);
+    return colorCode;  // Return the ANSI escape code for the color
+}
+
 /**
  * @brief Main function for the image to ASCII conversion program.
  *
@@ -30,6 +38,7 @@ int main(int argc, char** argv) {
 
     int widthScale = DEFAULT_WIDTH_SCALE;     // Default
     int heightScale = DEFAULT_HEIGHT_SCALE;   // Default
+    int colorChoice = 0;                      // Default
     char asciiChars[100];                     // Array to store user-defined ASCII characters (100 MAX)
     char outputPath[300];                     // Array to store user-defined output path
     strcpy(asciiChars, DEFAULT_ASCII_CHARS);  // Initialize with default value
@@ -54,6 +63,17 @@ int main(int argc, char** argv) {
         // Use default values, no need to prompt the user
         printf("Usando valores padrão...\n");
     } else {
+        // IF THE --DEFAULT FLAG IS NOT USED - User inputs
+        // Ask the user for the color preference
+        printf("Digite 1 para transformar com cor ou algo diferente continuar sem cor: ");
+        // Try reading the integer input
+        if (scanf("%d", &colorChoice) != 1) {
+            // If scanf doesn't return 1 (meaning it's not a valid integer)
+            colorChoice = 0;  // Set to 0 if input is invalid
+            // Clear the input buffer to prevent further issues
+            while(getchar() != '\n');
+        }
+
         // Ask the user for the output file path
         printf("Digite o caminho e nome do arquivo de saída (padrão: \"%s\"): ", DEFAULT_OUTPUT_PATH);
         char userPath[200];
@@ -145,18 +165,41 @@ int main(int argc, char** argv) {
 
     // Convert image to ASCII version
     // Two for loops for rows & columns
-    for (int i = 0; i < image.rows; i++) {
-        for (int j = 0; j < image.cols; j++) {
-            // Maps intensity of each pixel, convert to ASCII and writes on the output file
-            int intensity = image.at<uchar>(i, j);  // Takes each value of pixels (0-255)
-            char asciiChar = intensityToASCII(intensity, asciiChars); // Convert intensity to ASCII
-            fprintf(file, "%c", asciiChar); // Writes pixels in the output file
-            printf("%c", asciiChar); // Writes pixels in the terminal
+    // The if statement is for color conversion
+    if (colorChoice == 1) {
+        for (int i = 0; i < image.rows; i++) {
+            for (int j = 0; j < image.cols; j++) {
+                // Get the color pixel (BGR format)
+                cv::Vec3b pixel = image.at<cv::Vec3b>(i, j);
+                // Convert RGB to ANSI escape code
+                char* colorCode = rgbToAnsiColor(pixel);
+                int intensity = image.at<uchar>(i, j);  // Takes each value of pixels (0-255)
+                char asciiChar = intensityToASCII(intensity, asciiChars); // Convert intensity to ASCII
+
+                // Print color ASCII in terminal
+                printf("%s%c\033[0m", colorCode, asciiChar);  // Reset color after each character
+                fprintf(file, "%s%c\033[0m", colorCode, asciiChar);
+            }
+            // Adds breakline at the end of each row
+            fprintf(file, "\n");
+            printf("\n");
         }
-        // Adds breakline in the final of each row
-        fprintf(file, "\n");
-        printf("\n");
+    } else {
+        for (int i = 0; i < image.rows; i++) {
+            for (int j = 0; j < image.cols; j++) {
+                // Maps intensity of each pixel, convert to ASCII and writes on the output file
+                int intensity = image.at<uchar>(i, j);  // Takes each value of pixels (0-255)
+                char asciiChar = intensityToASCII(intensity, asciiChars); // Convert intensity to ASCII
+                fprintf(file, "%c", asciiChar); // Writes pixels in the output file
+                printf("%c", asciiChar); // Writes pixels in the terminal
+            }
+            // Adds breakline in the final of each row
+            fprintf(file, "\n");
+            printf("\n");
+        }
     }
+
+
 
     fclose(file); // Closes file
     printf("Conversão concluída! Resultado salvo em '%s'\n", outputPath); // Success log
