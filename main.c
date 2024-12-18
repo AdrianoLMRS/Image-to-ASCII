@@ -4,9 +4,10 @@
 #include <string.h>             // For string manipulation
 
 // * Default values
-#define DEFAULT_WIDTH_SCALE 10  // Width factor for scaling (characters are more long and taller)
-#define DEFAULT_HEIGHT_SCALE 10 // Height factor for scaling (characters are more long and taller)
-#define DEFAULT_ASCII_CHARS " .:-=+*#%@" // Permited ASCII characters
+#define DEFAULT_WIDTH_SCALE 10            // Width factor for scaling (characters are more long and taller)
+#define DEFAULT_HEIGHT_SCALE 10           // Height factor for scaling (characters are more long and taller)
+#define DEFAULT_ASCII_CHARS " .:-=+*#%@"  // Permited ASCII characters
+#define DEFAULT_OUTPUT_PATH "output.txt"  // Default output file name and path
 
 // Fuction for maping intensity for ASCII characters
 // The value can be between 0 and 255
@@ -29,11 +30,48 @@ int main(int argc, char** argv) {
     int widthScale = DEFAULT_WIDTH_SCALE;    // Default
     int heightScale = DEFAULT_HEIGHT_SCALE;  // Default
     char asciiChars[100];                    // Array to store user-defined ASCII characters (100 MAX)
+    char outputPath[300];                    // Array to store user-defined output path
     strcpy(asciiChars, DEFAULT_ASCII_CHARS); // Initialize with default value
 
     if (argc != 2) {
         printf("Uso: %s <caminho_para_imagem>\n", argv[0]);
         return -1;
+    }
+
+    // Ask the user for the output file path
+    printf("Digite o caminho e nome do arquivo de saída (padrão: \"%s\"): ", DEFAULT_OUTPUT_PATH);
+    char userPath[200];
+    if (fgets(userPath, sizeof(userPath), stdin) != NULL) {
+        if (userPath[0] == '\n') {
+            strcpy(userPath, DEFAULT_OUTPUT_PATH); // Use default if input is empty
+        } else {
+            userPath[strcspn(userPath, "\n")] = 0;  // Remove the newline at the end
+        }
+    }
+
+    // If user only provided a path but no filename, use "output.txt" as filename
+    if (userPath[strlen(userPath) - 1] == '/' || userPath[strlen(userPath) - 1] == '\\') {
+        // Check if the length of the path + "output.txt" fits into the buffer
+        if (strlen(userPath) + strlen("output.txt") < sizeof(outputPath)) {
+            snprintf(outputPath, sizeof(outputPath), "%soutput.txt", userPath);  // Add "output.txt" to the given path
+        } else {
+            printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
+            return -1; // If the path is too long
+        }
+    } else {
+        // If the user specified a file name but no extension, add ".txt"
+        if (strstr(userPath, ".txt") == NULL) {
+            // Check if the user path fits within the buffer when adding ".txt"
+            if (strlen(userPath) + strlen(".txt") < sizeof(outputPath)) {
+                snprintf(outputPath, sizeof(outputPath), "%s.txt", userPath);  // Add ".txt" extension
+            } else {
+                printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
+                return -1; // If the path is too long
+            }
+        } else {
+            strncpy(outputPath, userPath, sizeof(outputPath) - 1);
+            outputPath[sizeof(outputPath) - 1] = '\0';  // Ensure null termination
+        }
     }
 
     // Ask the user for the width scale
@@ -82,7 +120,7 @@ int main(int argc, char** argv) {
     cv::resize(image, image, cv::Size(cols, rows), 0, 0, cv::INTER_LINEAR);
 
     // Create a .txt dile as output
-    FILE* file = fopen("output.txt", "w");
+    FILE* file = fopen(outputPath, "w");
     if (file == NULL) {
         printf("Erro ao criar o arquivo de saída.\n");
         return -1;
@@ -104,7 +142,7 @@ int main(int argc, char** argv) {
     }
 
     fclose(file); // Closes file
-    printf("Conversão concluída! Resultado salvo em 'output.txt'\n"); // Success log
+    printf("Conversão concluída! Resultado salvo em '%s'\n", outputPath); // Success log
 
     return 0; // Success
 }
