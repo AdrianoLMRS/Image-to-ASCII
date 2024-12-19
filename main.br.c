@@ -43,20 +43,20 @@ int endsWithAllowedFormat(const char* path) {
 
 // Display help if --help flag
 void helpFlag(const char* programName) {
-    printf("Usage Manual - Image to ASCII Converter\n");
-    printf("\nUsage: %s <image_path> [options]\n", programName);
-    printf("\nOptions:\n");
-    printf("  --help             Displays this usage manual.\n");
-    printf("  --default          Uses default values without asking for user input.\n");
-    printf("\nUser Inputs:\n");
-    printf("  - Color preference: Type 1 to use color, or any other number for black and white.\n");
-    printf("  - Image path: The input file must be a valid image.\n");
-    printf("  - Width and height scale: Scale factors to adjust the aspect ratio.\n");
-    printf("  - ASCII characters: Set of characters to represent the image.\n");
-    printf("\nExample Usage:\n");
-    printf("  %s image.png\n", programName);
-    printf("  %s image.png --default\n", programName);
-    printf("  %s image.png --help\n", programName);
+    printf("Manual de Uso - Conversor de Imagens para ASCII\n");
+    printf("\nUso: %s <caminho_para_imagem> [opções]\n", programName);
+    printf("\nOpções:\n");
+    printf("  --help             Exibe este manual de uso.\n");
+    printf("  --default          Usa os valores padrão sem solicitar entrada do usuário.\n");
+    printf("\nEntradas do Usuário:\n");
+    printf("  - Preferência de cor: Digite 1 para usar cor, ou outro número para preto e branco.\n");
+    printf("  - Caminho para a imagem: O arquivo de entrada deve ser uma imagem válida.\n");
+    printf("  - Escala de largura e altura: Fatores de escala para ajustar a proporção.\n");
+    printf("  - Caracteres ASCII: Conjunto de caracteres para representar a imagem.\n");
+    printf("\nExemplo de Uso:\n");
+    printf("  %s imagem.png\n", programName);
+    printf("  %s imagem.png --default\n", programName);
+    printf("  %s imagem.png --help\n", programName);
 }
 
 /**
@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
 
     // If no path || invalid
     if (argc < 2) {
-        printf("Usage: %s <image_path> [options]\n", argv[0]);
-        printf("\n\nType --help for more information.");
+        printf("Uso: %s <caminho_para_imagem> [opções]\n", argv[0]);
+        printf("\n\nDigite --help para mais informações.");
         return -1;
     }
 
@@ -106,11 +106,11 @@ int main(int argc, char** argv) {
     char input[10];  // Array to hold user input
     if (useDefaults) {
         // Use default values, no need to prompt the user
-        printf("Using default values...\n");
+        printf("Usando valores padrão...\n");
     } else {
         // IF THE --DEFAULT FLAG IS NOT USED - User inputs
         // Ask the user for the color preference
-        printf("Type 1 to convert with color or any other key to proceed without color: ");
+        printf("Digite 1 para transformar com cor ou algo diferente continuar sem cor: ");
         if (fgets(input, sizeof(input), stdin) != NULL) {
             // If input is empty (i.e., just Enter)
             if (input[0] == '\n') {
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
         }
         if (colorChoice != 1) {
             // Ask the user for the output file path
-            printf("Enter the output file path and name (default: \"%s\"): ", DEFAULT_OUTPUT_PATH);
+            printf("Digite o caminho e nome do arquivo de saída (padrão: \"%s\"): ", DEFAULT_OUTPUT_PATH);
             if (fgets(userPath, sizeof(userPath), stdin) != NULL) {
                 if (userPath[0] == '\n') {
                     strcpy(userPath, DEFAULT_OUTPUT_PATH); // Use default if input is empty
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
                 if (strlen(userPath) + strlen("output.txt") < sizeof(outputPath)) {
                     snprintf(outputPath, sizeof(outputPath), "%soutput.txt", userPath);  // Add "output.txt" to the given path
                 } else {
-                    printf("Error: The path is too long for the output file.\n");
+                    printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
                     return -1; // If the path is too long
                 }
             } else {
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
                     if (strlen(userPath) + strlen(".txt") < sizeof(outputPath)) {
                         snprintf(outputPath, sizeof(outputPath), "%s.txt", userPath);  // Add ".txt" extension
                     } else {
-                        printf("Error: The path is too long for the output file.\n");
+                        printf("Erro: O caminho é muito longo para o arquivo de saída.\n");
                         return -1; // If the path is too long
                     }
                 } else {
@@ -157,22 +157,23 @@ int main(int argc, char** argv) {
                 }
             }
         } else {
-            // Input for path
-            printf("Enter the file path (with extension, default: .png): ");
+            // Solicita o caminho do arquivo
+            printf("Digite o caminho do arquivo (com a extensão): ");
             scanf("%s", userPath);
 
+            // Verifica se o colorChoice é 1 e se o userPath não termina com um formato permitido
             if (colorChoice == 1 && !endsWithAllowedFormat(userPath)) {
-                // If no endsWithAllowedFormat() puts .png format
+                // Se não terminar com .png, .jpeg ou .webp, coloca .png
                 strcat(userPath, ".png");
-                printf("The file will be saved as: %s\n", userPath);
+                printf("O arquivo será salvo como: %s\n", userPath);
             } else {
-                printf("The file will be saved as: %s\n", userPath);
+                printf("O arquivo será salvo como: %s\n", userPath);
             }
             strcpy(outputPath, userPath);
         }
 
         // Ask the user for the width scale
-        printf("Enter the scale factor for width (default: %d): ", DEFAULT_WIDTH_SCALE);
+        printf("Digite o fator de escala para a largura (padrão: %d): ", DEFAULT_WIDTH_SCALE);
         char input[10];
         if (fgets(input, sizeof(input), stdin) != NULL) {
             if (input[0] != '\n') {  // If the user didn't just press Enter
@@ -183,7 +184,7 @@ int main(int argc, char** argv) {
         }
 
         // Ask the user for the height scale
-        printf("Enter the scale factor for width (default: %d): ", DEFAULT_WIDTH_SCALE);
+        printf("Digite o fator de escala para a altura (padrão: %d): ", DEFAULT_HEIGHT_SCALE);
         if (fgets(input, sizeof(input), stdin) != NULL) {
             if (input[0] != '\n') {  // If the user didn't just press Enter
                 if (sscanf(input, "%d", &heightScale) != 1) {
@@ -193,7 +194,7 @@ int main(int argc, char** argv) {
         }
 
         // Ask the user for ASCII characters
-        printf("Enter the ASCII characters to use (default: \"%s\"): ", DEFAULT_ASCII_CHARS);
+        printf("Digite os caracteres ASCII para usar (padrão: \"%s\"): ", DEFAULT_ASCII_CHARS);
         if (fgets(asciiChars, sizeof(asciiChars), stdin) != NULL) {
             if (asciiChars[0] == '\n') {
                 strcpy(asciiChars, DEFAULT_ASCII_CHARS); // Use default if input is empty
@@ -206,7 +207,7 @@ int main(int argc, char** argv) {
     // Loads image in gray scale format
     cv::Mat image = cv::imread(argv[1], cv::IMREAD_COLOR);
     if (image.empty()) {
-        printf("Error loading the image.\n");
+        printf("Erro ao carregar a imagem.\n");
         return -1;
     }
 
@@ -220,7 +221,7 @@ int main(int argc, char** argv) {
     // Create a .txt file as output
     FILE* file = fopen(outputPath, "w");
     if (file == NULL) {
-        printf("Error creating the output file.\n");
+        printf("Erro ao criar o arquivo de saída.\n");
         return -1;
     }
 
@@ -250,7 +251,7 @@ int main(int argc, char** argv) {
 
         // Save the rendered image
         cv::imwrite(outputPath, output);
-        printf("Image generated and saved as: %s\n", outputPath);
+        printf("Imagem gerada e salva como: %s\n", outputPath);
 
     } else {
         // Convert to grayscale
@@ -275,7 +276,7 @@ int main(int argc, char** argv) {
     }
 
     fclose(file); // Closes file
-    printf("Conversion complete! Result saved in '%s'\n", outputPath); // Success log
+    printf("Conversão concluída! Resultado salvo em '%s'\n", outputPath); // Success log
 
     return 0; // Success
 }
