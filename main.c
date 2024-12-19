@@ -70,6 +70,7 @@ void helpFlag(const char* programName) {
  * @return 0 if the program runs successfully, -1 if an error occurs.
  */
 int main(int argc, char** argv) {
+    cv::setNumThreads(1);
 
     // Display help manual if --help is passed
     if (argc == 2 && strcmp(argv[1], "--help") == 0) {
